@@ -68,6 +68,19 @@ for some results, under their directions, with much frustration each time a
 much easier to write bugs than software apparently, let me try and fix this
 one*.
 
+### Running it
+
+It's actually quite simple:
+
+    $ apt-get install clisp
+    $ clisp -i pencil.lisp
+    
+Then I would advice something in the spirit of:
+
+    $ alias game=`clisp -i pencil.lisp`
+    
+### The history / background / comments
+
 Also, writing the code on the *Raspberry Pi* console with a wrong keyboard
 map (come on it's a plain qwerty keyboard here...) and with a bare Emacs
 setup has not been helping much. Still, fun ;-)
