@@ -105,3 +105,29 @@ It might come to be a great lesson later when kids are beginning to read
 code and will ask about those completely wrong things, then we will think
 and fix them together, or maybe at this point they will just fix them a make
 lots of fun about daddy coding abilities... some more fun ahead.
+
+## Another one
+
+Now school is all about summing numbers with two digits. Can we program a
+training game for that very funny exercise?
+
+    clisp -i ./sums.lisp
+
+The game only accepts the correct digit, and you can quit at any time by
+entering either `q` or `x`. After each successful computation you're
+rewarded in french with a *Bravo* and a statement about the sum you just
+did, just as in the following *screenshot*:
+
+      Bravo!  82 + 53 = 135.
+    
+    
+    
+              8 2
+    
+            + 5 3
+    
+            ------
+    
+            1 3 5
+
+Go play now!
