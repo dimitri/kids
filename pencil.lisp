@@ -53,7 +53,7 @@
 
   (with-highlighting ((eq :pencil *current-pencil*) screen:*window*)
     (format screen:*window* "pencil"))
-  
+
   (screen:set-window-cursor-position screen:*window*
 				     (+ width 2)
 				     (+ 10 38))
@@ -89,7 +89,7 @@
       (let ((x (random width))
 	    (y (random height)))
 	(draw-head x y)
-      
+
 	(ext:with-keyboard
 	    (loop
 	       :for key := (read-char ext:*keyboard-input*)
@@ -97,7 +97,7 @@
 				       (zerop (ext:char-bits key))
 				       (character key))
 	       :for key-char := (when key-char-p (character key))
-	       
+
 	       :when key-char-p
 	       :do (case (character key)
 		     (#\e (when (< 1 x)            (decf x)))
