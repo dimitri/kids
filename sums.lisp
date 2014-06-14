@@ -1,13 +1,37 @@
+#!/bin/bash
+#|
+exec clisp -q -q $0 $0 ${1+"$@"}
+exit
+|#
+
+(defparameter *digits* 3)
+(defparameter *numbers* 3)
+
 (defun list-digits (number)
-  (nreverse
-   (loop :with q := number :with r := 0
-      :while (plusp q)
-      :do (setf (values q r) (truncate q 10))
-      :collect r)))
+  "Return a list of NUMBER digits, including as many leading zeros as needed
+   for *digits*."
+  (let ((digits
+         (nreverse
+          (loop :with q := number :with r := 0
+             :while (plusp q)
+             :do (setf (values q r) (truncate q 10))
+             :collect r))))
+    ;; maybe preprend with leading zeroes
+    (if (< (length digits) *digits*)
+        (append (make-list (- *digits* (length digits)) :initial-element 0)
+                digits)
+        digits)))
 
 (defun number-to-exploded-string (number)
   "returns the number with digits separated by a space"
-  (format nil "~{~d~^ ~}" (list-digits number)))
+  (let ((digits-with-leading-spaces
+         (loop :for leading-zeroes = t :then (= d 0)
+            :for d :in (list-digits number)
+            :when (and leading-zeroes (= d 0))
+            :collect #\Space
+            :else
+            :collect d)))
+    (format nil "~{~a~^ ~}" digits-with-leading-spaces)))
 
 (defun format-at-point (w x y fmt &rest args)
   (screen:set-window-cursor-position w x y)
@@ -25,22 +49,25 @@
 			  "~:[+ ~;~]~d"
 			  first
 			  (number-to-exploded-string number))
-     :finally (format-at-point w x-position y-position "---------")))
+     :finally (format-at-point w x-position y-position
+                               (make-string (+ 2 (* 2 *digits*))
+                                            :initial-element #\-))))
 
 (defun complete-sum (window width height)
   (let* ((w      window)
-	 (n-list (loop :repeat 3 :collect (+ 100 (random 89))))
+	 (n-list (loop :repeat *numbers* :collect (random (expt 10 *digits*))))
          (sum    (reduce #'+ n-list))
          (digits (reverse (list-digits sum)))
-	 (x-ans  (+ 4 2 (* 2 (length n-list)))))
+	 (x-ans  (+ 4 2 (* 2 *numbers*)))
+         (y-ans  (+ 8 (* 2 *digits*))))
 
     (draw-sum n-list :window w :width width :height height)
-    (screen:set-window-cursor-position w x-ans 14)
+    (screen:set-window-cursor-position w x-ans y-ans)
 
     (ext:with-keyboard
         (loop
            :with expected-digits := digits
-           :with y-position := 14
+           :with y-position := y-ans
            :for key := (read-char ext:*keyboard-input*)
            :for key-char-p := (and (not (ext:char-key key))
                                    (zerop (ext:char-bits key))
@@ -68,9 +95,20 @@
 
            :finally (return n-list)))))
 
+(defun parse-options (args)
+  "Set *numbers* and *digits* according to command line."
+  (loop :for (arg value) :on (rest args) :by #'cddr
+     :when (string-equal "-n" arg)
+     :do   (setf *numbers* (parse-integer value))
+
+     :when (string-equal "-d" arg)
+     :do   (setf *digits* (parse-integer value))))
+
 (defun main ()
   ;; first reset the randomness of the game
   (setf *random-state* (make-random-state t))
+  (parse-options ext:*args*)
+
   (screen:with-window ()
     (multiple-value-bind (width height)
         (screen:window-size screen:*window*)
