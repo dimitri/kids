@@ -15,25 +15,32 @@
       (format w "~{~}" fmt args)
       (format w "~a" fmt)))
 
-(defun draw-sum (a b &key ((:window w) screen:*window*) width height)
-  (format-at-point w 10 10  "~d" (number-to-exploded-string a))
-  (format-at-point w 12 8 "+ ~d" (number-to-exploded-string b))
-  (format-at-point w 14 8 "------")
-  (screen:set-window-cursor-position w 16 12))
+(defun draw-sum (numbers &key ((:window w) screen:*window*) width height)
+  (loop
+     :for x-position = 4 :then (+ x-position 2)
+     :for y-position = 10 :then 8
+     :for number :in numbers
+     :for first = t :then nil
+     :do (format-at-point w x-position y-position
+			  "~:[+ ~;~]~d"
+			  first
+			  (number-to-exploded-string number))
+     :finally (format-at-point w x-position y-position "---------")))
 
 (defun complete-sum (window width height)
   (let* ((w      window)
-         (a      (+ 10 (random 89)))
-         (b      (+ 10 (random 89)))
-         (sum    (+ a b))
-         (digits (reverse (list-digits sum))))
+	 (n-list (loop :repeat 3 :collect (+ 100 (random 89))))
+         (sum    (reduce #'+ n-list))
+         (digits (reverse (list-digits sum)))
+	 (x-ans  (+ 4 2 (* 2 (length n-list)))))
 
-    (draw-sum a b :window w :width width :height height)
+    (draw-sum n-list :window w :width width :height height)
+    (screen:set-window-cursor-position w x-ans 14)
 
     (ext:with-keyboard
         (loop
            :with expected-digits := digits
-           :with y-position := 12
+           :with y-position := 14
            :for key := (read-char ext:*keyboard-input*)
            :for key-char-p := (and (not (ext:char-key key))
                                    (zerop (ext:char-bits key))
@@ -46,20 +53,20 @@
            :when (and entered-digit
                       (= entered-digit (car expected-digits)))
            :do (progn
-                 (format-at-point w 16 y-position "~d" entered-digit)
+                 (format-at-point w x-ans y-position "~d" entered-digit)
                  ;; we just made progress, and we move left
                  (setf y-position      (+ y-position -2))
                  (setf expected-digits (cdr expected-digits))
 
-                 (screen:set-window-cursor-position w 16 y-position))
+                 (screen:set-window-cursor-position w x-ans y-position))
 
            :while expected-digits
 
            :when (and key-char (or (char= key-char #\q)
                                    (char= key-char #\x)))
-           :return (list nil nil)
+           :return nil
 
-           :finally (return (list a b))))))
+           :finally (return n-list)))))
 
 (defun main ()
   ;; first reset the randomness of the game
@@ -68,12 +75,13 @@
     (multiple-value-bind (width height)
         (screen:window-size screen:*window*)
 
-      (loop :for (a b) := (complete-sum screen:*window* width height)
-         :while a
+      (loop :for n-list := (complete-sum screen:*window* width height)
+         :while n-list
 
-         :do (progn (format-at-point screen:*window* 6 2
-                                     "Bravo!  ~a + ~a = ~a."
-                                     a b (+ a b))
+         :do (progn (format-at-point screen:*window* 2 2
+                                     "Bravo!  ~{~a~^ + ~} = ~a."
+                                     n-list
+				     (reduce #'+ n-list))
 
                     ;; press any key to continue
                     (ext:with-keyboard
