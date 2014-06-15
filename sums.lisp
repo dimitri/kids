@@ -25,7 +25,7 @@ exit
 (defun number-to-exploded-string (number)
   "returns the number with digits separated by a space"
   (let ((digits-with-leading-spaces
-         (loop :for leading-zeroes = t :then (= d 0)
+         (loop :for leading-zeroes = t :then (and leading-zeroes (= d 0))
             :for d :in (list-digits number)
             :when (and leading-zeroes (= d 0))
             :collect #\Space
